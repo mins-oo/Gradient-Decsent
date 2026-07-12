@@ -1,7 +1,11 @@
+import streamlit as st
+
+st.title("Gradient Descent Laboratory")
+
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-from sympy import symbols, Derivative, lambdify, E
+from sympy import symbols, Derivative, lambdify
 
 x = symbols('x')
 input_func = x ** 2
@@ -21,6 +25,8 @@ while(abs(input_func.subs(x, theta)) > 1):
     
     x_history.append(theta)
     y_history.append(float(input_func.subs(x, theta)))
+
+
 
 
 # 4. 애니메이션용 그래프 기본 설정 (Figure & Axes)
