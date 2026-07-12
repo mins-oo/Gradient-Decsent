@@ -11,10 +11,6 @@ RUN apt-get update && apt-get install -y \
 
 RUN git clone https://github.com/mins-oo/Gradient-Decsent.git .
 
-COPY requirements.txt /app/
-
-COPY main.py /app/
-
 RUN pip install --no-cache-dir -r requirements.txt
 
 EXPOSE 8501

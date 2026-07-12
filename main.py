@@ -1,65 +1,61 @@
-import streamlit as st
-
-st.title("Gradient Descent Laboratory")
-
-import numpy as np
+import time
 import matplotlib.pyplot as plt
-import matplotlib.animation as animation
-from sympy import symbols, Derivative, lambdify
+import numpy as np
+import streamlit as st
+from sympy import Derivative, lambdify, symbols
+
+st.set_page_config(page_title="Gradient Descent Laboratory")
+st.title("민수의 Gradient Descent 연구소")
 
 x = symbols('x')
 input_func = x ** 2
 loss_func = lambdify(x, input_func, 'numpy')
 gradient = Derivative(input_func, x).doit()
 
-# parameter set
-theta = 80.0
-learning_rate = 0.3
+st.sidebar.header("Loss Function")
+st.sidebar.latex(r'''L(x) = x^2''')
 
-x_history = [theta]
-y_history = [float(input_func.subs(x, theta))]
+st.sidebar.header("Parameters")
+theta_init = st.sidebar.slider("Initial Theta", min_value=-100, max_value=100, value=80, step=1)
+learning_rate = st.sidebar.slider("Learning Rate", min_value=0.01, max_value=2.0, value=0.3, step=0.01)
 
-while(abs(input_func.subs(x, theta)) > 1):
-    d = float(gradient.subs(x, theta))
-    theta = theta - learning_rate * d
-    
-    x_history.append(theta)
-    y_history.append(float(input_func.subs(x, theta)))
+if st.sidebar.button("Execute"):
+    theta = float(theta_init)
+    x_history = [theta]
+    y_history = [float(input_func.subs(x, theta))]
 
+    while abs(input_func.subs(x, theta)) > 1:
+        d = float(gradient.subs(x, theta))
+        theta = theta - learning_rate * d
+        x_history.append(theta)
+        y_history.append(float(input_func.subs(x, theta)))
 
+    chart_placeholder = st.empty()
+    status_placeholder = st.empty()
 
+    min_x, max_x = -100, 100
+    x_vals = np.linspace(min_x, max_x, 200)
+    y_vals = loss_func(x_vals)
 
-# 4. 애니메이션용 그래프 기본 설정 (Figure & Axes)
-fig, ax = plt.subplots(figsize=(8, 5))
+    for step in range(len(x_history)):
+        fig, ax = plt.subplots(figsize=(8, 5))
+        ax.plot(x_vals, y_vals, label=r'$L(x) = x^2$', color='lightgray', linewidth=2)
+        ax.plot(x_history[:step + 1], y_history[:step + 1], 'ro--', label='Path', linewidth=2, markersize=6)
+        ax.set_xlabel('x')
+        ax.set_ylabel('Loss')
+        ax.grid(True)
+        ax.legend()
 
-# 배경이 될 손실함수 곡선 세팅 (x 범위 설정)
-min_x, max_x = -100, 100
-x_vals = np.linspace(min_x, max_x, 200)
-y_vals = loss_func(x_vals)
+        chart_placeholder.pyplot(fig)
+        plt.close(fig)
+        time.sleep(0.25)
 
-ax.plot(x_vals, y_vals, label=r'$f(x) = x^3$', color='lightgray', linewidth=2)
-ax.set_title('Gradient Descent Animation')
-ax.set_xlabel('x')
-ax.set_ylabel('Loss')
-ax.grid(True)
-
-line, = ax.plot([], [], 'ro--', label='Path')
-point, = ax.plot([], [], 'ro', markersize=8)
-ax.legend()
-
-# 5. 애니메이션 프레임 업데이트 함수
-def update(frame):
-    # frame 스텝까지의 이동 경로 업데이트
-    line.set_data(x_history[:frame+1], y_history[:frame+1])
-    # 현재 위치 점 표시
-    point.set_data([x_history[frame]], [y_history[frame]])
-    return line, point
-
-# 6. FuncAnimation 객체 생성 (300ms 마다 1프레임 전환)
-anim = animation.FuncAnimation(
-    fig, update, frames=len(x_history), interval=300, blit=True
-)
-
-# 7. GIF 파일로 저장 (컨테이너 환경용)
-anim.save('result.gif', writer='pillow')
-print("success")
+    st.subheader("Log")
+    history_data = {
+        "Step": list(range(len(x_history))),
+        "Theta": [f"{v:.4f}" for v in x_history],
+        "Loss": [f"{v:.4f}" for v in y_history],
+    }
+    st.dataframe(history_data, width='stretch')
+else:
+    st.info("Press \'Execute\' to start gradient descent.")
